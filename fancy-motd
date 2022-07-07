@@ -1,0 +1,84 @@
+#!/usr/bin/env python3
+
+import sys
+import string
+import random
+import re
+from colorama import Fore
+
+
+def random_letter():
+    return random.choice('0123456789')
+
+
+def random_color_letter():
+    return random.choice([Fore.CYAN, Fore.CYAN, Fore.LIGHTCYAN_EX]) + random_letter()
+
+
+def decolorification(text):
+    # https://stackoverflow.com/questions/14693701/how-can-i-remove-the-ansi-escape-sequences-from-a-string-in-python
+    # 7-bit C1 ANSI sequences
+    ansi_escape = re.compile(r'''
+        \x1B  # ESC
+        (?:   # 7-bit C1 Fe (except CSI)
+            [@-Z\\-_]
+        |     # or [ for CSI, followed by a control sequence
+            \[
+            [0-?]*  # Parameter bytes
+            [ -/]*  # Intermediate bytes
+            [@-~]   # Final byte
+        )
+    ''', re.VERBOSE)
+
+    res = []
+    for line in text:
+        res.append(ansi_escape.sub('', line))
+
+    return res
+
+
+def main():
+    if len(sys.argv) != 2:
+        print(f'Usage: {sys.argv[0]} TEXT_PATH')
+        sys.exit(-1)
+
+    text_path = sys.argv[1]
+    text = []
+    with open(text_path, 'r') as f:
+        text = f.readlines()
+
+    boring_text = decolorification(text)
+    bg_width = max([len(l) for l in boring_text])
+    bg_height = len(boring_text)
+
+    new = []
+    for i in range(len(text)):
+        new_line = str()
+        new_line += random_color_letter()
+        for char in text[i]:
+            if char == ' ':
+                new_line += random_color_letter()
+            else:
+                new_line += char
+        new_line = new_line.strip()
+
+        line_len = len(boring_text[i][:-1]) - 1
+        while line_len < bg_width:
+            new_line += random_color_letter()
+            line_len += 1
+        new.append(new_line)
+                
+    for i in range(bg_width + 2):
+        print(random_color_letter(), end='')
+    print()
+    for line in new:
+        print(line)
+    for i in range(bg_width + 2):
+        print(random_color_letter(), end='')
+
+    print(Fore.RESET)
+
+
+if __name__ == '__main__':
+    main()
+
